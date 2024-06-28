@@ -1,0 +1,87 @@
+services:
+  scheduler:
+    container_name: scheduler
+    build: scheduler
+    depends_on:
+      - kafka
+      - api
+    environment:
+      KAFKA_BROKER: kafka:9092
+      API_ENDPOINT: http://api:8000
+    networks:
+      - default
+
+  api:
+    container_name: api
+    hostname: api
+    build: api
+    restart: on-failure
+    depends_on:
+      - kafka
+      - postgres
+    ports:
+      - 8000:8000
+    environment:
+      KAFKA_BROKER: kafka:9092
+      DB_HOST: postgres
+    networks:
+      - default
+
+  kafka:
+    container_name: kafka
+    hostname: kafka
+    image: bitnami/kafka:latest
+    ports:
+      - 9092:9092
+    environment:
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_KRAFT_CLUSTER_ID=kafka
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+      - KAFKA_CFG_ADVERTISED_HOST_NAME=kafka
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+    volumes:
+      - ./volumes:/bitnami
+    networks:
+      - default
+
+  kafka-ui:
+    container_name: kafka-ui
+    image: ghcr.io/kafbat/kafka-ui:latest
+    ports:
+      - 8080:8080
+    environment:
+      KAFKA_CLUSTERS_0_NAME: default
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      DYNAMIC_CONFIG_ENABLED: 'true'
+    volumes:
+      - type: bind
+        source: ./volumes/kafka-ui/config.yaml
+        target: /etc/kafkaui/dynamic_config.yaml
+    #      - ./volumes/kafka-ui/config.yaml:/etc/kafkaui/dynamic_config.yaml
+    networks:
+      - default
+
+  postgres:
+    container_name: postgres
+    hostname: postgres
+    image: postgres:16.3-alpine
+    environment:
+      POSTGRES_DB: "products"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./volumes/pg-15-3:/var/lib/postgresql/data
+    networks:
+      - default
+
+
+networks:
+  default:
+    external: true
+    name: default_network

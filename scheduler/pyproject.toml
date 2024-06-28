@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "scheduler"
+version = "0.1.0"
+description = ""
+authors = ["LivioMirandaJr <livio_1990@hotmail.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+confluent-kafka = "^2.4.0"
+pydantic-settings = "^2.3.4"
+msgspec = "^0.18.6"
+aiohttp = "^3.9.5"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
